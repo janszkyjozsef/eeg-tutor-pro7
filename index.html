@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>EEG Tutor – Pro v2.1 (Lessons fix + MCQ Identify)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="cover" style="display:none">
+  <div class="card" style="max-width:640px; margin:10vh auto">
+    <h2>EEG Tutor – Sign in</h2>
+    <p id="status" class="muted">Nincs bejelentkezve. / Not signed in.</p>
+    <div class="controls" style="margin-top:8px">
+      <button id="loginBtn" class="primary">Google Sign-in</button>
+      <button id="continueBtn" class="ghost">Folytatás offline</button>
+    </div>
+    <div class="small muted" style="margin-top:6px">Belépés opcionális. Offline módban is működik. A profil (XP, Best, Streak, Advanced) Firestore-ba szinkronizálva.</div>
+  </div>
+</div>
+
+<div id="app" style="display:none"><header>
+  <div class="row">
+    <h1>EEG Tutor</h1>
+    <span class="badge">Pro v2.0 • Multi-file</span>
+  </div>
+  <div class="row">
+    <span class="pill lang" id="langBtn">HU ▾</span>
+    <span class="pill" id="advBtn" title="Advanced mode">Advanced: <span id="advState">off</span></span>
+    <span class="pill"><span id="lvl">1</span> <span id="lvlLbl">Szint</span></span>
+    <span class="pill"><span id="xp">0</span> <span id="xpLbl">XP</span></span>
+    <button id="logoutBtn" class="ghost">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <div class="tabs">
+      <button id="tabExplore" class="primary">Explore</button>
+      <button id="tabIdentify" class="ghost">Identify</button>
+      <button id="tabQuiz" class="ghost">Quiz</button>
+      <button id="tabLessons" class="ghost">Lessons</button>
+    </div>
+  </div>
+
+  <!-- Explore -->
+  <div class="card" id="explore">
+    <div class="controls" style="margin-top:10px">
+      <select id="caseSel"></select>
+      <button id="toggleAns" class="ghost"><span id="solutionLbl">Megoldás</span>: <span id="ansLbl">be</span></button>
+      <button id="playBtn" class="ghost">⏯️ Pause</button>
+      <span class="pill"><span id="speedLbl">Sebesség</span> <span id="spdLbl">1.0×</span></span>
+      <input type="range" id="speed" min="0.5" max="5" step="0.1" value="1" style="flex:1">
+    </div>
+    <div class="small" id="meta"></div>
+    <div style="margin-top:8px" class="muted" id="desc"></div>
+    <div class="small" id="tags" style="margin:6px 0 8px 0"></div>
+    <canvas id="eeg"></canvas>
+    <div class="grid two" style="margin-top:10px">
+      <div class="card">
+        <div class="section-title" id="explainHdr">Részletes magyarázat</div>
+        <div id="explain" class="muted"></div>
+        <div id="explainAdv" class="muted hidden"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" id="tipsHdr">Tippek</div>
+        <ul id="tips" class="muted" style="padding-left:18px"></ul>
+        <ul id="tipsAdv" class="muted hidden" style="padding-left:18px"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Identify -->
+  <div class="card hidden" id="identify">
+    <div class="controls" style="margin-top:10px">
+      <select id="difficulty"></select>
+      <button id="newIdentify" class="primary">Új feladat →</button>
+      <button id="freezeIdentify" class="ghost">🧊 Freeze</button>
+      <button id="hintBtn" class="ghost">💡 Tipp</button>
+    </div>
+    <div class="small" id="idfMeta" style="margin-top:6px"></div>
+    <canvas id="eeg2"></canvas>
+    <div id="mcq" class="controls" style="margin-top:8px; flex-direction:column; align-items:flex-start"></div>
+    <div class="controls"><button id="check">Ellenőrzés</button></div>
+    <div id="fb" class="kudos hidden" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="card hidden" id="quiz">
+    <div class="controls" style="margin-top:10px">
+      <select id="caseSelQ"></select>
+      <button id="resetQuiz" class="ghost">🔄 Reset</button>
+      <button id="freezeQuiz" class="ghost">🧊 Freeze</button>
+      <button id="snapshotQuiz" class="ghost">📸 Next snapshot</button>
+      <button id="showSolution" class="primary">Megoldás + XP</button>
+    </div>
+    <div class="small" id="task" style="margin-top:4px"></div>
+    <div class="small" id="quizInstr" style="margin-top:4px"></div>
+    <canvas id="eeg3"></canvas>
+    <div class="card" style="margin-top:10px">
+      <div class="section-title" id="scoreHdr">Pontszám</div>
+      <div class="row" style="justify-content:space-between">
+        <div id="hitLbl"><span id="hitsLblTxt">Találatok</span>: <span id="hits" class="score">0</span> / <span id="total">0</span></div>
+        <div><span id="totalLbl">Összesen</span>: <span id="pct" class="score">0%</span></div>
+      </div>
+      <div class="progress" style="margin-top:8px"><div id="bar"></div></div>
+      <div class="small" style="margin-top:6px"><span id="bestLbl">Legjobb</span>: <span id="best">0</span>%</div>
+      <div class="small" id="noEvents" style="margin-top:6px; display:none"></div>
+    </div>
+  </div>
+
+  <!-- Lessons -->
+  <div class="card hidden" id="lessons">
+    <div class="controls" style="margin-top:10px">
+      <select id="lessonLevel"></select>
+      <select id="lessonSel"></select>
+      <button id="startLesson" class="primary">Start</button>
+    </div>
+    <div id="lessonBody" class="grid two"></div>
+    <div id="lessonQuiz" class="card hidden" style="margin-top:10px">
+      <div class="section-title" id="miniQuizHdr">Mini-quiz</div>
+      <div class="small" id="lqInstr" style="margin-bottom:6px"></div>
+      <div id="lqQ" class="muted" style="margin-bottom:8px"></div>
+      <div class="controls" id="lqChoices" style="flex-direction:column;align-items:flex-start"></div>
+      <div class="controls"><button id="lqSubmit" class="primary">Submit</button></div>
+      <div id="lqFb" class="kudos hidden" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title" id="medalHdr">Medálok</div>
+    <ul id="medals" class="muted" style="padding-left:18px; margin:0"></ul>
+  </div>
+
+  <div class="footer" id="footerTxt">Canvas Dev build. Köv.: EDF/CSV import, JSON export, több hard case, csatornaérzékeny pontozás.</div>
+</div>
+
+<div id="errorBanner"></div>
+
+<script src="i18n.js"></script>
+<script src="data.cases.js"></script>
+<script src="data.lessons.js"></script>
+<script src="app.js"></script>
+<script type="module" src="auth.js"></script>
+</body>
+</html>
+
+</div>
