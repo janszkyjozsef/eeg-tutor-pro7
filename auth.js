@@ -41,14 +41,22 @@ try {
 }
 
 async function doLogin(){
-  if(!auth){ alert('Firebase nincs inicializálva.'); return; }
+  if(!auth){ setStatus('Firebase nincs inicializálva.'); return; }
   try{
     await signInWithPopup(auth, provider);
   }catch(e){
-    if(String(e?.message||'').toLowerCase().includes('popup')){
-      await signInWithRedirect(auth, provider);
+    const msg = String(e?.message||'');
+    if(msg.toLowerCase().includes('popup')){
+      try{ await signInWithRedirect(auth, provider); }
+      catch(err){ console.warn('Redirect login failed:', err); setStatus('Login hiba: '+err.code); }
+    }else if(e.code === 'auth/unauthorized-domain'){
+      console.warn('Unauthorized domain for Firebase login');
+      setStatus('⚠️ Domain nem engedélyezett / Domain not authorized');
+      showCover();
     }else{
-      alert('Login hiba: '+e.message);
+      console.warn('Login failed:', e);
+      setStatus('Login hiba: '+(e.code||e.message));
+      showCover();
     }
   }
 }
@@ -61,13 +69,13 @@ if(auth){ getRedirectResult(auth).catch(e=>console.warn('Redirect result:', e));
 
 if(auth){
   onAuthStateChanged(auth, async (user)=>{
-    if(!user){
-      if(cover) cover.style.display='block';  // show overlay but keep app usable
-      setStatus('Nincs bejelentkezve. / Not signed in.');
-      window.firebaseUser = null;
-      window.onProfileUpdate = null;
-      return;
-    }
+      if(!user){
+        showCover();
+        setStatus('Nincs bejelentkezve. / Not signed in.');
+        window.firebaseUser = null;
+        window.onProfileUpdate = null;
+        return;
+      }
     window.firebaseUser = user;
     setStatus(`Bejelentkezve: ${user.displayName || user.email}  (UID: ${user.uid})`);
     showApp();

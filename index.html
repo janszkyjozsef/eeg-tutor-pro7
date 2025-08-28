@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="cover" style="display:none">
+<div id="cover" style="display:block">
   <div class="card" style="max-width:640px; margin:10vh auto">
     <h2>EEG Tutor – Sign in</h2>
     <p id="status" class="muted">Nincs bejelentkezve. / Not signed in.</p>
@@ -40,6 +40,7 @@
       <button id="tabIdentify" class="ghost">Identify</button>
       <button id="tabQuiz" class="ghost">Quiz</button>
       <button id="tabLessons" class="ghost">Lessons</button>
+      <button id="tabBook" class="ghost">Book</button>
     </div>
   </div>
 
@@ -127,6 +128,17 @@
     </div>
   </div>
 
+  <!-- Book -->
+  <div class="card hidden" id="book">
+    <div class="controls" style="margin-top:10px">
+      <select id="bookSel"></select>
+      <button id="bookPrev" class="ghost">◀ <span id="prevLbl"></span></button>
+      <span id="bookPageLbl">1/1</span>
+      <button id="bookNext" class="ghost"><span id="nextLbl"></span> ▶</button>
+    </div>
+    <div id="bookBody" class="muted" style="margin-top:10px; white-space:pre-line"></div>
+  </div>
+
   <div class="card">
     <div class="section-title" id="medalHdr">Medálok</div>
     <ul id="medals" class="muted" style="padding-left:18px; margin:0"></ul>
@@ -140,9 +152,8 @@
 <script src="i18n.js"></script>
 <script src="data.cases.js"></script>
 <script src="data.lessons.js"></script>
+<script src="data.book.js"></script>
 <script src="app.js"></script>
 <script type="module" src="auth.js"></script>
 </body>
 </html>
-
-</div>
