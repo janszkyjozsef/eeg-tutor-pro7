@@ -35,3 +35,4 @@ Run `npm test` to check all JavaScript files for syntax errors.
 - Add your GitHub Pages domain under **Authorized domains** in Firebase Auth settings.
 - Update `auth.js` with your Firebase config if needed.
 - If login fails, the app runs offline and stores progress locally.
+
