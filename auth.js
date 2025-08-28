@@ -61,13 +61,13 @@ if(auth){ getRedirectResult(auth).catch(e=>console.warn('Redirect result:', e));
 
 if(auth){
   onAuthStateChanged(auth, async (user)=>{
-    if(!user){
-      if(cover) cover.style.display='block';  // show overlay but keep app usable
-      setStatus('Nincs bejelentkezve. / Not signed in.');
-      window.firebaseUser = null;
-      window.onProfileUpdate = null;
-      return;
-    }
+      if(!user){
+        showCover();
+        setStatus('Nincs bejelentkezve. / Not signed in.');
+        window.firebaseUser = null;
+        window.onProfileUpdate = null;
+        return;
+      }
     window.firebaseUser = user;
     setStatus(`Bejelentkezve: ${user.displayName || user.email}  (UID: ${user.uid})`);
     showApp();
