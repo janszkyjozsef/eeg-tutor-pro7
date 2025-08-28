@@ -1,5 +1,6 @@
 (function(){
   const { CASES, S, isSynonym } = window.EEG_DATA;
+  const BOOKS = window.EEG_BOOKS || [];
 
   // ==== Simple XP (no profiles) ====
   let XP = parseInt(getLS('eeg_xp','0')||'0',10);
@@ -26,8 +27,9 @@
 
   // ==== State & helpers ====
   let mode='explore', showAns=true, playing=true, speed=1.0; let tExplore=0; let diffFilter='beginner';
-  let current=CASES[0], idCurrent=CASES[0], idFreeze=false, idOff=0; 
+  let current=CASES[0], idCurrent=CASES[0], idFreeze=false, idOff=0;
   let qCurrent=CASES.find(c=>c.includeInQuiz)||CASES[0], qFreeze=false, qShowAnswer=false, qOff=0, marks=[];
+  let bookCurrent = BOOKS[0] || null, bookPage = 0;
 
 // ==== Cloud profile bridge (Firebase optional) ====
 window.getProfile = ()=>({ XP, BEST, STREAK, ADVANCED });
@@ -52,6 +54,7 @@ window.applyProfile = (p)=>{
     byId('tabIdentify').textContent = tK('identify');
     byId('tabQuiz').textContent = tK('quiz');
     byId('tabLessons').textContent = tK('lessons');
+    if(byId('tabBook')) byId('tabBook').textContent = tK('book');
     byId('solutionLbl').textContent = tK('solution');
     byId('ansLbl').textContent = showAns ? tK('on') : tK('off');
     byId('speedLbl').textContent = tK('speed');
@@ -80,7 +83,13 @@ window.applyProfile = (p)=>{
     byId('quizInstr').textContent = tK('task_explain');
     byId('advBtn').title = tK('advanced');
     byId('advState').textContent = ADVANCED ? tK('advanced_on') : tK('advanced_off');
-    syncMeta(); syncTask(); refreshMeta();
+    if(byId('prevLbl')) byId('prevLbl').textContent = tK('prev');
+    if(byId('nextLbl')) byId('nextLbl').textContent = tK('next');
+    refreshAllSelectors();
+    syncMeta();
+    syncTask();
+    refreshMeta();
+    syncBook();
   };
 
   function mapDiff(d){
@@ -90,7 +99,8 @@ window.applyProfile = (p)=>{
 
   function syncMeta(){
     const LANG = getLang();
-    byId('meta').textContent = (LANG==='HU'? window.I18N.HU.caseMeta : window.I18N.EN.caseMeta)(current.montage, mapDiff(current.diff), (LANG==='HU'?current.titleHU:current.titleEN));
+    const dict = window.I18N[LANG];
+    byId('meta').textContent = dict.caseMeta(current.montage, mapDiff(current.diff), (LANG==='HU'?current.titleHU:current.titleEN));
     byId('desc').textContent = (LANG==='HU'?current.descHU:current.descEN);
     const tagDiv=byId('tags'); tagDiv.innerHTML = (current.tags||[]).map(x=>`<span class="chip">${x}</span>`).join(' ');
 
@@ -109,11 +119,27 @@ window.applyProfile = (p)=>{
     byId('tipsAdv').classList.toggle('hidden', !ADVANCED);
   }
 
-  function syncTask(){ const LANG=getLang(); const txt = LANG==='HU' ? (qCurrent.quizTargetHU||'események') : (qCurrent.quizTargetEN||'events'); byId('task').textContent = (LANG==='HU'?window.I18N.HU.task:window.I18N.EN.task)(txt); const has = quizTotal()>0; byId('noEvents').style.display = has?'none':'block'; byId('noEvents').textContent = tK('noEvents'); }
+  function syncTask(){ const LANG=getLang(); const txt = LANG==='HU' ? (qCurrent.quizTargetHU||'események') : (qCurrent.quizTargetEN||'events'); byId('task').textContent = window.I18N[LANG].task(txt); const has = quizTotal()>0; byId('noEvents').style.display = has?'none':'block'; byId('noEvents').textContent = tK('noEvents'); }
 
   // ==== Tabs ====
-  function setTab(tab){ mode=tab; byId('tabExplore').className = tab==='explore'?'primary':'ghost'; byId('tabIdentify').className = tab==='identify'?'primary':'ghost'; byId('tabQuiz').className = tab==='quiz'?'primary':'ghost'; byId('tabLessons').className = tab==='lessons'?'primary':'ghost'; byId('explore').classList.toggle('hidden', tab!=='explore'); byId('identify').classList.toggle('hidden', tab!=='identify'); byId('quiz').classList.toggle('hidden', tab!=='quiz'); byId('lessons').classList.toggle('hidden', tab!=='lessons'); }
-  byId('tabExplore').onclick=()=>setTab('explore'); byId('tabIdentify').onclick=()=>setTab('identify'); byId('tabQuiz').onclick=()=>setTab('quiz'); byId('tabLessons').onclick=()=>setTab('lessons');
+  function setTab(tab){
+    mode=tab;
+    byId('tabExplore').className = tab==='explore'?'primary':'ghost';
+    byId('tabIdentify').className = tab==='identify'?'primary':'ghost';
+    byId('tabQuiz').className = tab==='quiz'?'primary':'ghost';
+    byId('tabLessons').className = tab==='lessons'?'primary':'ghost';
+    if(byId('tabBook')) byId('tabBook').className = tab==='book'?'primary':'ghost';
+    byId('explore').classList.toggle('hidden', tab!=='explore');
+    byId('identify').classList.toggle('hidden', tab!=='identify');
+    byId('quiz').classList.toggle('hidden', tab!=='quiz');
+    byId('lessons').classList.toggle('hidden', tab!=='lessons');
+    if(byId('book')) byId('book').classList.toggle('hidden', tab!=='book');
+  }
+  byId('tabExplore').onclick=()=>setTab('explore');
+  byId('tabIdentify').onclick=()=>setTab('identify');
+  byId('tabQuiz').onclick=()=>setTab('quiz');
+  byId('tabLessons').onclick=()=>setTab('lessons');
+  if(byId('tabBook')) byId('tabBook').onclick=()=>setTab('book');
 
   // ==== Explore ====
   const caseSel = byId('caseSel');
@@ -122,14 +148,32 @@ window.applyProfile = (p)=>{
   byId('toggleAns').onclick=()=>{ showAns=!showAns; byId('ansLbl').textContent=showAns?tK('on'):tK('off'); };
   byId('playBtn').onclick=()=>{ playing=!playing; byId('playBtn').textContent= playing?'⏯️ '+tK('pause'):'▶️ '+tK('play'); };
   byId('speed').oninput=(e)=>{ speed=parseFloat(e.target.value); byId('spdLbl').textContent=speed.toFixed(1)+'×'; };
-  byId('langBtn').onclick=()=>{ setLang(getLang()==='HU'?'EN':'HU'); };
+  byId('langBtn').onclick=()=>{ setLang(getLang()==='HU'?'US':'HU'); };
   byId('advBtn').onclick=()=>{ ADVANCED=!ADVANCED; setLS('eeg_adv', ADVANCED?'1':'0'); refreshMeta(); syncMeta(); syncTexts(); if(window.onProfileUpdate){ try{ window.onProfileUpdate({XP,BEST,STREAK,ADVANCED}); }catch(e){} } };
 
   // ==== Identify ====
   const difficulty = byId('difficulty');
-  function buildDifficulty(){ const opts=[["beginner",tK('beginner')],["intermediate",tK('intermediate')],["hard",tK('hard')],["expert",tK('expert')],["all",tK('all')]]; difficulty.innerHTML=''; opts.forEach(([v,txt])=>{ const o=document.createElement('option'); o.value=v; o.textContent=txt; difficulty.appendChild(o); }); }
+  function buildDifficulty(){
+    const prev = difficulty.value;
+    const opts=[
+      ["beginner",tK('beginner')],
+      ["intermediate",tK('intermediate')],
+      ["hard",tK('hard')],
+      ["expert",tK('expert')],
+      ["all",tK('all')]
+    ];
+    difficulty.innerHTML='';
+    opts.forEach(([v,txt])=>{
+      const o=document.createElement('option');
+      o.value=v;
+      o.textContent=txt;
+      difficulty.appendChild(o);
+    });
+    if(prev) difficulty.value = prev;
+  }
   const idfMeta = byId('idfMeta'); const mcqDiv = byId('mcq'); const fb = byId('fb');
-  difficulty.onchange=()=>{ /* filter only on new */ };
+  // when difficulty changes, immediately load a new case from that level
+  difficulty.onchange=()=>{ idRandomCase(); };
   byId('newIdentify').onclick=()=>idRandomCase(); byId('freezeIdentify').onclick=()=>{ idFreeze=!idFreeze; if(!idFreeze) idOff=0; };
   byId('hintBtn').onclick=()=>{ const title = (getLang()==='HU'?idCurrent.titleHU:idCurrent.titleEN); const initials = title.split(' ').map(w=>w[0].toUpperCase()).join(''); fb.classList.remove('hidden','no'); fb.classList.add('ok'); fb.textContent = tK('hintText') + initials; };
   byId('check').onclick=handleIdentify;
@@ -139,7 +183,7 @@ window.applyProfile = (p)=>{
     if(val==='expert') return CASES.filter(c=>c.diff==='expert'||c.diff==='hard');
     return CASES.filter(c=>c.diff===val);
   }
-  function idRandomCase(){ const arr=filteredCases(); idCurrent = arr[Math.floor(Math.random()*arr.length)]; idfMeta.textContent = (getLang()==='HU'?window.I18N.HU.idfMeta:window.I18N.EN.idfMeta)(mapDiff(idCurrent.diff), idCurrent.montage); fb.className='kudos hidden'; fb.textContent=''; buildIdentifyChoices(); }
+  function idRandomCase(){ const arr=filteredCases(); idCurrent = arr[Math.floor(Math.random()*arr.length)]; const LANG=getLang(); idfMeta.textContent = window.I18N[LANG].idfMeta(mapDiff(idCurrent.diff), idCurrent.montage); fb.className='kudos hidden'; fb.textContent=''; buildIdentifyChoices(); }
   function buildIdentifyChoices(){
     // Build 4 options: correct + 3 foils (prefer same difficulty if possible)
     const langHU = getLang()==='HU';
@@ -258,6 +302,30 @@ window.applyProfile = (p)=>{
   }
   byId('startLesson').onclick=()=> renderLesson(lessonSel.value);
 
+  // ==== Book ====
+  const bookSel = byId('bookSel');
+  function buildBookSelect(){
+    if(!bookSel) return;
+    const prev = bookSel.value;
+    bookSel.innerHTML='';
+    BOOKS.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=(getLang()==='HU'?b.titleHU:b.titleEN); bookSel.appendChild(o); });
+    if(prev) bookSel.value = prev;
+    else if(bookCurrent) bookSel.value = bookCurrent.id;
+  }
+  function syncBook(){
+    if(!bookCurrent || !byId('bookBody')) return;
+    const p = bookCurrent.pages[bookPage];
+    const lang = getLang();
+    const txt = lang==='HU' ? (ADVANCED ? p.advHU : p.hu) : (ADVANCED ? p.advEN : p.en);
+    byId('bookBody').textContent = txt;
+    byId('bookPageLbl').textContent = (bookPage+1)+'/'+bookCurrent.pages.length;
+  }
+  if(bookSel){
+    bookSel.onchange=()=>{ bookCurrent = BOOKS.find(b=>b.id===bookSel.value) || bookCurrent; bookPage=0; syncBook(); };
+    if(byId('bookPrev')) byId('bookPrev').onclick=()=>{ if(bookCurrent && bookPage>0){ bookPage--; syncBook(); } };
+    if(byId('bookNext')) byId('bookNext').onclick=()=>{ if(bookCurrent && bookPage<bookCurrent.pages.length-1){ bookPage++; syncBook(); } };
+  }
+
   // ==== Drawing (safe RAF) ====
   function fitCanvas(c){ const w=c.clientWidth*devicePixelRatio, h=c.clientHeight*devicePixelRatio; if(c.width!==w||c.height!==h){ c.width=w; c.height=h; } }
   function toXY(c, i, yVal, idx, chCount, sampleRate){ const xScale = c.width / sampleRate; const chGap=(c.height-40)/chCount; const yBase=20+idx*chGap+chGap/2; const yScale=12*devicePixelRatio; return {x:i*xScale, y:yBase - yVal*yScale, yBase, chGap}; }
@@ -367,7 +435,7 @@ function drawScales(ctx, canvas, sampleRate, chCount){
 
   // ==== Init ====
   function refreshAllSelectors(){
-    refreshCaseOptions(); refreshCaseOptionsQ(); buildDifficulty(); buildLessonLevels(); refreshLessons();
+    refreshCaseOptions(); refreshCaseOptionsQ(); buildDifficulty(); buildLessonLevels(); refreshLessons(); buildBookSelect();
   }
   function init(){
     refreshAllSelectors();
