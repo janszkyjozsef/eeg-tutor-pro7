@@ -80,7 +80,10 @@ window.applyProfile = (p)=>{
     byId('quizInstr').textContent = tK('task_explain');
     byId('advBtn').title = tK('advanced');
     byId('advState').textContent = ADVANCED ? tK('advanced_on') : tK('advanced_off');
-    syncMeta(); syncTask(); refreshMeta();
+    refreshAllSelectors();
+    syncMeta();
+    syncTask();
+    refreshMeta();
   };
 
   function mapDiff(d){
@@ -129,7 +132,8 @@ window.applyProfile = (p)=>{
   const difficulty = byId('difficulty');
   function buildDifficulty(){ const opts=[["beginner",tK('beginner')],["intermediate",tK('intermediate')],["hard",tK('hard')],["expert",tK('expert')],["all",tK('all')]]; difficulty.innerHTML=''; opts.forEach(([v,txt])=>{ const o=document.createElement('option'); o.value=v; o.textContent=txt; difficulty.appendChild(o); }); }
   const idfMeta = byId('idfMeta'); const mcqDiv = byId('mcq'); const fb = byId('fb');
-  difficulty.onchange=()=>{ /* filter only on new */ };
+  // when difficulty changes, immediately load a new case from that level
+  difficulty.onchange=()=>{ idRandomCase(); };
   byId('newIdentify').onclick=()=>idRandomCase(); byId('freezeIdentify').onclick=()=>{ idFreeze=!idFreeze; if(!idFreeze) idOff=0; };
   byId('hintBtn').onclick=()=>{ const title = (getLang()==='HU'?idCurrent.titleHU:idCurrent.titleEN); const initials = title.split(' ').map(w=>w[0].toUpperCase()).join(''); fb.classList.remove('hidden','no'); fb.classList.add('ok'); fb.textContent = tK('hintText') + initials; };
   byId('check').onclick=handleIdentify;
