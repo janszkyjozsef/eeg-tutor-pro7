@@ -8,7 +8,7 @@
   window.getLS=(k,def=null)=>{ try{ const v=SafeStore.getItem(k); return v===null?def:v; }catch(e){ return def; } };
   window.setLS=(k,v)=>{ try{ SafeStore.setItem(k,v); }catch(e){} };
 
-  /* ==== i18n (HU/EN) ==== */
+  /* ==== i18n (HU/US) ==== */
   const I18N = {
     HU: {
       explore:"Explore", identify:"Identify", quiz:"Quiz", lessons:"Lessons",
@@ -61,8 +61,10 @@
       signIn:"Sign in", signOut:"Sign out", offline:"Offline mode"
     }
   };
+  I18N.US = I18N.EN;
   window.I18N = I18N;
   let LANG = (getLS("eeg_lang","HU") || "HU");
+  if(LANG === 'EN') LANG = 'US';
   window.getLang = ()=>LANG;
   window.setLang = function(L){ LANG=L; setLS("eeg_lang",L); if(window.syncTexts) window.syncTexts(); };
   window.tK = function(k){ return I18N[LANG][k] || k; };
