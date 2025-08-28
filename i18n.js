@@ -8,7 +8,7 @@
   window.getLS=(k,def=null)=>{ try{ const v=SafeStore.getItem(k); return v===null?def:v; }catch(e){ return def; } };
   window.setLS=(k,v)=>{ try{ SafeStore.setItem(k,v); }catch(e){} };
 
-  /* ==== i18n (HU/EN) ==== */
+  /* ==== i18n (HU/US) ==== */
   const I18N = {
     HU: {
       explore:"Explore", identify:"Identify", quiz:"Quiz", lessons:"Lessons",
@@ -33,7 +33,8 @@
       lessonsBeginner:"Kezdő", lessonsIntermediate:"Középhaladó", lessonsExpert:"Expert",
       advanced:"Haladó mód", advanced_on:"be", advanced_off:"ki",
       freeze_first:"Előbb állítsd meg (Freeze) a jelet a jelöléshez.",
-      signIn:"Belépés", signOut:"Kijelentkezés", offline:"Offline mód"
+      signIn:"Belépés", signOut:"Kijelentkezés", offline:"Offline mód",
+      book:"Könyv", prev:"Előző", next:"Következő"
     },
     EN: {
       explore:"Explore", identify:"Identify", quiz:"Quiz", lessons:"Lessons",
@@ -58,12 +59,21 @@
       lessonsBeginner:"Beginner", lessonsIntermediate:"Intermediate", lessonsExpert:"Expert",
       advanced:"Advanced mode", advanced_on:"on", advanced_off:"off",
       freeze_first:"Please Freeze before marking.",
-      signIn:"Sign in", signOut:"Sign out", offline:"Offline mode"
+      signIn:"Sign in", signOut:"Sign out", offline:"Offline mode",
+      book:"Book", prev:"Previous", next:"Next"
     }
   };
+  I18N.US = I18N.EN;
   window.I18N = I18N;
   let LANG = (getLS("eeg_lang","HU") || "HU");
+  if(LANG === 'EN') LANG = 'US';
   window.getLang = ()=>LANG;
-  window.setLang = function(L){ LANG=L; setLS("eeg_lang",L); if(window.syncTexts) window.syncTexts(); };
-  window.tK = function(k){ return I18N[LANG][k] || k; };
+    window.setLang = function(L){
+      LANG = L;
+      document.documentElement.lang = (L === 'HU' ? 'hu' : 'en');
+      setLS("eeg_lang", L);
+      if(window.syncTexts) window.syncTexts();
+    };
+    window.tK = function(k){ return I18N[LANG][k] || k; };
+    document.documentElement.lang = (LANG === 'HU' ? 'hu' : 'en');
 })();
