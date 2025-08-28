@@ -93,7 +93,8 @@ window.applyProfile = (p)=>{
 
   function syncMeta(){
     const LANG = getLang();
-    byId('meta').textContent = (LANG==='HU'? window.I18N.HU.caseMeta : window.I18N.EN.caseMeta)(current.montage, mapDiff(current.diff), (LANG==='HU'?current.titleHU:current.titleEN));
+    const dict = window.I18N[LANG];
+    byId('meta').textContent = dict.caseMeta(current.montage, mapDiff(current.diff), (LANG==='HU'?current.titleHU:current.titleEN));
     byId('desc').textContent = (LANG==='HU'?current.descHU:current.descEN);
     const tagDiv=byId('tags'); tagDiv.innerHTML = (current.tags||[]).map(x=>`<span class="chip">${x}</span>`).join(' ');
 
@@ -112,7 +113,7 @@ window.applyProfile = (p)=>{
     byId('tipsAdv').classList.toggle('hidden', !ADVANCED);
   }
 
-  function syncTask(){ const LANG=getLang(); const txt = LANG==='HU' ? (qCurrent.quizTargetHU||'események') : (qCurrent.quizTargetEN||'events'); byId('task').textContent = (LANG==='HU'?window.I18N.HU.task:window.I18N.EN.task)(txt); const has = quizTotal()>0; byId('noEvents').style.display = has?'none':'block'; byId('noEvents').textContent = tK('noEvents'); }
+  function syncTask(){ const LANG=getLang(); const txt = LANG==='HU' ? (qCurrent.quizTargetHU||'események') : (qCurrent.quizTargetEN||'events'); byId('task').textContent = window.I18N[LANG].task(txt); const has = quizTotal()>0; byId('noEvents').style.display = has?'none':'block'; byId('noEvents').textContent = tK('noEvents'); }
 
   // ==== Tabs ====
   function setTab(tab){ mode=tab; byId('tabExplore').className = tab==='explore'?'primary':'ghost'; byId('tabIdentify').className = tab==='identify'?'primary':'ghost'; byId('tabQuiz').className = tab==='quiz'?'primary':'ghost'; byId('tabLessons').className = tab==='lessons'?'primary':'ghost'; byId('explore').classList.toggle('hidden', tab!=='explore'); byId('identify').classList.toggle('hidden', tab!=='identify'); byId('quiz').classList.toggle('hidden', tab!=='quiz'); byId('lessons').classList.toggle('hidden', tab!=='lessons'); }
@@ -125,7 +126,7 @@ window.applyProfile = (p)=>{
   byId('toggleAns').onclick=()=>{ showAns=!showAns; byId('ansLbl').textContent=showAns?tK('on'):tK('off'); };
   byId('playBtn').onclick=()=>{ playing=!playing; byId('playBtn').textContent= playing?'⏯️ '+tK('pause'):'▶️ '+tK('play'); };
   byId('speed').oninput=(e)=>{ speed=parseFloat(e.target.value); byId('spdLbl').textContent=speed.toFixed(1)+'×'; };
-  byId('langBtn').onclick=()=>{ setLang(getLang()==='HU'?'EN':'HU'); };
+  byId('langBtn').onclick=()=>{ setLang(getLang()==='HU'?'US':'HU'); };
   byId('advBtn').onclick=()=>{ ADVANCED=!ADVANCED; setLS('eeg_adv', ADVANCED?'1':'0'); refreshMeta(); syncMeta(); syncTexts(); if(window.onProfileUpdate){ try{ window.onProfileUpdate({XP,BEST,STREAK,ADVANCED}); }catch(e){} } };
 
   // ==== Identify ====
@@ -143,7 +144,7 @@ window.applyProfile = (p)=>{
     if(val==='expert') return CASES.filter(c=>c.diff==='expert'||c.diff==='hard');
     return CASES.filter(c=>c.diff===val);
   }
-  function idRandomCase(){ const arr=filteredCases(); idCurrent = arr[Math.floor(Math.random()*arr.length)]; idfMeta.textContent = (getLang()==='HU'?window.I18N.HU.idfMeta:window.I18N.EN.idfMeta)(mapDiff(idCurrent.diff), idCurrent.montage); fb.className='kudos hidden'; fb.textContent=''; buildIdentifyChoices(); }
+  function idRandomCase(){ const arr=filteredCases(); idCurrent = arr[Math.floor(Math.random()*arr.length)]; const LANG=getLang(); idfMeta.textContent = window.I18N[LANG].idfMeta(mapDiff(idCurrent.diff), idCurrent.montage); fb.className='kudos hidden'; fb.textContent=''; buildIdentifyChoices(); }
   function buildIdentifyChoices(){
     // Build 4 options: correct + 3 foils (prefer same difficulty if possible)
     const langHU = getLang()==='HU';

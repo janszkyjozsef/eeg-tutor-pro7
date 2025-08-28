@@ -1,0 +1,9 @@
+{
+  "name": "eeg-tutor-pro7",
+  "version": "2.1.0",
+  "description": "EEG Tutor Pro static app with HU/US translations",
+  "private": true,
+  "scripts": {
+    "test": "node --check app.js && node --check auth.js && node --check data.cases.js && node --check data.lessons.js && node --check i18n.js"
+  }
+}
