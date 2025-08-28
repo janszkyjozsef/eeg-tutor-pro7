@@ -83,13 +83,10 @@ window.applyProfile = (p)=>{
     byId('quizInstr').textContent = tK('task_explain');
     byId('advBtn').title = tK('advanced');
     byId('advState').textContent = ADVANCED ? tK('advanced_on') : tK('advanced_off');
-    if(byId('prevLbl')) byId('prevLbl').textContent = tK('prev');
-    if(byId('nextLbl')) byId('nextLbl').textContent = tK('next');
     refreshAllSelectors();
     syncMeta();
     syncTask();
     refreshMeta();
-    syncBook();
   };
 
   function mapDiff(d){

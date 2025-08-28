@@ -19,7 +19,6 @@ Multi-file version of your EEG Tutor with:
 - `i18n.js` – Language texts + helpers
 - `data.cases.js` – Synthetic EEG generators and CASES list
 - `data.lessons.js` – 30 lessons
-- `data.book.js` – Basic EEG book pages
 - `app.js` – App logic
 - `package.json` – Project metadata and test scripts
 
