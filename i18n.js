@@ -68,6 +68,12 @@
   let LANG = (getLS("eeg_lang","HU") || "HU");
   if(LANG === 'EN') LANG = 'US';
   window.getLang = ()=>LANG;
-  window.setLang = function(L){ LANG=L; setLS("eeg_lang",L); if(window.syncTexts) window.syncTexts(); };
-  window.tK = function(k){ return I18N[LANG][k] || k; };
+    window.setLang = function(L){
+      LANG = L;
+      document.documentElement.lang = (L === 'HU' ? 'hu' : 'en');
+      setLS("eeg_lang", L);
+      if(window.syncTexts) window.syncTexts();
+    };
+    window.tK = function(k){ return I18N[LANG][k] || k; };
+    document.documentElement.lang = (LANG === 'HU' ? 'hu' : 'en');
 })();
